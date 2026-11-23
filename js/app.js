@@ -722,7 +722,74 @@ function bindEvents() {
   });
 }
 
+// =========================================================
+// Instalação como App no Celular (PWA + Service Worker)
+// =========================================================
+let deferredInstallPrompt = null;
+
+function isRunningStandalone() {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true
+  );
+}
+
+function setupPwaInstall() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  }
+
+  const banner = document.getElementById("install-banner");
+  const btnInstall = document.getElementById("btn-install-app");
+  const btnDismiss = document.getElementById("btn-dismiss-install");
+  const iosModal = document.getElementById("ios-install-modal");
+  const btnCloseIos = document.getElementById("btn-close-ios-modal");
+
+  btnCloseIos.addEventListener("click", () => iosModal.classList.add("hidden"));
+  btnDismiss.addEventListener("click", () => {
+    banner.classList.add("hidden");
+    sessionStorage.setItem("venancinho_install_dismissed", "1");
+  });
+
+  // Se já está aberto como app instalado, não mostra o banner
+  if (isRunningStandalone() || sessionStorage.getItem("venancinho_install_dismissed") === "1") {
+    return;
+  }
+
+  // Mostra o banner em celulares/tablets (e também quando Chrome dispara beforeinstallprompt)
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile) {
+    banner.classList.remove("hidden");
+  }
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    banner.classList.remove("hidden");
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    banner.classList.add("hidden");
+    showToast("App instalado na tela inicial! 💗📱");
+  });
+
+  btnInstall.addEventListener("click", async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const result = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      if (result && result.outcome === "accepted") {
+        banner.classList.add("hidden");
+      }
+    } else {
+      iosModal.classList.remove("hidden");
+    }
+  });
+}
+
 async function boot() {
+  setupPwaInstall();
   bindEvents();
   updateClocksAndCountdown();
   setInterval(updateClocksAndCountdown, 30000);

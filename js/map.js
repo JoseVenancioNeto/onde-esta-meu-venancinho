@@ -55,12 +55,27 @@ export function initTripMap(initialLocation) {
     scrollWheelZoom: false
   }).setView([initialLocation.lat, initialLocation.lng], 12);
 
-  // Tiles claros e elegantes da CartoDB Voyager (combinam perfeitamente com pastel!)
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
-    subdomains: "abcd",
+  // Tiles oficiais do OpenStreetMap (100% gratuitos, sem API key!)
+  // com fallback automático para ArcGIS World Street Map (também sem API key)
+  const osmLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
     maxZoom: 19
-  }).addTo(mapInstance);
+  });
+
+  let fallbackLoaded = false;
+  osmLayer.on("tileerror", () => {
+    if (fallbackLoaded || !mapInstance) return;
+    fallbackLoaded = true;
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+      {
+        attribution: "Tiles &copy; Esri",
+        maxZoom: 18
+      }
+    ).addTo(mapInstance);
+  });
+
+  osmLayer.addTo(mapInstance);
 
   // Linha suave da rota planejada da viagem (Manaus -> Recife -> João Pessoa)
   const plannedCoords = ROUTE_WAYPOINTS.map((w) => [w.lat, w.lng]);

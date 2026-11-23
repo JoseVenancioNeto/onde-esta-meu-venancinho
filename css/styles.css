@@ -150,8 +150,9 @@ body {
   z-index: 900;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  background: rgba(255, 251, 247, 0.86);
+  background: rgba(255, 251, 247, 0.88);
   border-bottom: 1px solid var(--border-soft);
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .header-inner {
@@ -510,9 +511,9 @@ body {
   z-index: 1;
 }
 
-/* Toque pastel suave nos tiles do mapa */
+/* Toque pastel suave nos tiles do OpenStreetMap */
 #trip-map .leaflet-tile-pane {
-  filter: saturate(0.88) brightness(1.03) contrast(0.96);
+  filter: saturate(0.76) brightness(1.05) contrast(0.93);
 }
 
 .map-controls-overlay {
@@ -1310,10 +1311,77 @@ textarea {
 
 .app-footer {
   text-align: center;
-  padding: 12px 16px 32px;
+  padding: 12px 16px calc(32px + env(safe-area-inset-bottom, 0px));
   font-size: 0.8rem;
   color: var(--ink-soft);
   font-weight: 700;
+}
+
+/* Banner de instalação como App (PWA) */
+.install-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--pink-soft), var(--lavender-soft), var(--mint-soft));
+  border: 1.5px solid #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.install-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.install-banner-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 2px solid #fff;
+  box-shadow: 0 3px 8px rgba(74, 53, 72, 0.14);
+  flex-shrink: 0;
+}
+
+.install-banner-left strong {
+  display: block;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 0.92rem;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.install-banner-left span {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.install-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.install-close-btn {
+  border: none;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink-soft);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* =========================================================

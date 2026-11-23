@@ -2,8 +2,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#FFD6E0" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Meu Venancinho" />
@@ -11,7 +12,7 @@
 
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" href="assets/icon-192.png" />
-  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="512x512" href="assets/icon-512.png" />
 
   <!-- Google Fonts: Fredoka (títulos fofos), Nunito (corpo legível), Caveat (cartinhas à mão) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -62,6 +63,21 @@
   </header>
 
   <main class="app-main">
+    <!-- BANNER FOFO PARA INSTALAR COMO APP NO CELULAR -->
+    <div id="install-banner" class="install-banner hidden">
+      <div class="install-banner-left">
+        <img src="assets/icon-192.png" alt="Ícone do app" class="install-banner-icon" />
+        <div>
+          <strong>Instalar no celular 📲</strong>
+          <span>Salve na tela inicial como um app!</span>
+        </div>
+      </div>
+      <div class="install-banner-actions">
+        <button type="button" class="btn btn-rose btn-sm" id="btn-install-app">Instalar</button>
+        <button type="button" class="install-close-btn" id="btn-dismiss-install" aria-label="Fechar">✕</button>
+      </div>
+    </div>
+
     <!-- ==================== VISÃO DA CAROLINE (TELA INICIAL) ==================== -->
     <section id="view-caroline" class="view-section">
       <!-- 1. RECADINHO DO VENÂNCIO LOGO NA TELA INICIAL -->
@@ -376,13 +392,27 @@
           autocomplete="off"
           required
         />
-        <p class="pin-hint">Dica: datas da viagem (2430)</p>
         <p class="pin-error hidden" id="pin-error">PIN incorreto, tenta de novo!</p>
         <div class="btn-row">
           <button type="button" class="btn btn-soft" id="btn-cancel-pin">Voltar</button>
           <button type="submit" class="btn btn-rose">Entrar ✨</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE INSTALAÇÃO NO IPHONE / CELULAR -->
+  <div id="ios-install-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="ios-install-title">
+    <div class="modal-card">
+      <div class="modal-face-badge">
+        <img src="assets/icon-192.png" alt="Ícone Meu Venancinho" style="width:66px;height:66px;border-radius:50%;" />
+      </div>
+      <h2 id="ios-install-title">Instalar no celular 📲</h2>
+      <p class="modal-subtitle" id="install-instructions-text">
+        No <strong>iPhone (Safari)</strong>: toque no botão <strong>Compartilhar (⬆️)</strong> na barra inferior e escolha <strong>"Adicionar à Tela de Início"</strong>.<br/><br/>
+        No <strong>Android (Chrome)</strong>: toque nos <strong>3 pontinhos (⋮)</strong> no canto superior e escolha <strong>"Instalar app"</strong> ou <strong>"Adicionar à tela inicial"</strong>.
+      </p>
+      <button type="button" class="btn btn-rose btn-full" id="btn-close-ios-modal">Entendi! 💗</button>
     </div>
   </div>
 
