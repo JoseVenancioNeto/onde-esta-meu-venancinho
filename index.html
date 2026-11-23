@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#FFD6E0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Meu Venancinho" />
+  <title>Onde está meu Venancinho? 💗</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+
+  <!-- Google Fonts: Fredoka (títulos fofos), Nunito (corpo legível), Caveat (cartinhas à mão) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- Camada de corações flutuantes -->
+  <div id="hearts-layer" aria-hidden="true"></div>
+
+  <!-- Fundo suave com nuvens/bolhas pastel -->
+  <div class="pastel-bg" aria-hidden="true">
+    <span class="blob blob-pink"></span>
+    <span class="blob blob-lavender"></span>
+    <span class="blob blob-mint"></span>
+    <span class="blob blob-peach"></span>
+  </div>
+
+  <!-- HEADER FIXO -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-avatar-wrap">
+          <img src="assets/venancio-face.png" alt="Venâncio" class="brand-face" />
+          <span class="brand-heart">💗</span>
+        </div>
+        <div class="brand-text">
+          <h1>Onde está meu Venancinho?</h1>
+          <p class="brand-sub" id="sync-status-text">Caroline &amp; Venâncio • 24 a 30/11</p>
+        </div>
+      </div>
+
+      <div class="role-toggle" role="tablist" aria-label="Alternar modo">
+        <button id="btn-mode-caroline" class="role-btn active" role="tab" aria-selected="true">
+          <span>🌷</span> Caroline
+        </button>
+        <button id="btn-mode-venancio" class="role-btn" role="tab" aria-selected="false">
+          <span>🧸</span> Venâncio
+          <span id="venancio-unread-dot" class="unread-dot hidden" title="Novo recadinho da Caroline!"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- ==================== VISÃO DA CAROLINE (TELA INICIAL) ==================== -->
+    <section id="view-caroline" class="view-section">
+      <!-- 1. RECADINHO DO VENÂNCIO LOGO NA TELA INICIAL -->
+      <article class="card note-spotlight note-from-venancio" id="caroline-featured-note-card">
+        <div class="note-spotlight-header">
+          <div class="note-author">
+            <img src="assets/venancio-face.png" alt="Venâncio" class="mini-face" />
+            <div>
+              <span class="note-kicker">Recadinho do seu Venancinho 💌</span>
+              <span class="note-time" id="featured-v-time">agora há pouco</span>
+            </div>
+          </div>
+          <span class="badge-new hidden" id="featured-v-badge">Novo! ✨</span>
+        </div>
+
+        <p class="handwritten-note" id="featured-v-text">
+          Oi meu amor! Já estou morrendo de saudade. Abre aqui sempre que quiser ver onde seu Venancinho está! 💗
+        </p>
+
+        <div class="note-spotlight-actions">
+          <button class="btn btn-rose btn-sm" id="btn-miss-you">
+            💗 Tô com saudade (<span id="hug-counter">0</span>)
+          </button>
+          <button class="btn btn-lavender btn-sm" id="btn-jump-reply">
+            ✉️ Mandar recadinho pra ele
+          </button>
+        </div>
+      </article>
+
+      <!-- 2. BARRA DE CONTAGEM REGRESSIVA + RELÓGIOS + DISTÂNCIA -->
+      <section class="stats-strip">
+        <div class="stat-pill stat-peach">
+          <span class="stat-label">⏳ Volta pra casa</span>
+          <strong class="stat-value" id="countdown-text">Calculando...</strong>
+        </div>
+        <div class="stat-pill stat-sky">
+          <span class="stat-label">📏 Distância</span>
+          <strong class="stat-value" id="distance-text">0 km</strong>
+        </div>
+        <div class="stat-pill stat-mint">
+          <span class="stat-label">🕒 Horários</span>
+          <strong class="stat-value" id="clocks-text">MAO --:-- • JPA --:--</strong>
+        </div>
+      </section>
+
+      <!-- 3. MAPA INTERATIVO COM BONEQUINHO DO VENÂNCIO -->
+      <article class="card map-card">
+        <div class="card-header-row">
+          <div>
+            <span class="pill-tag pill-pink" id="current-pose-tag">✈️ Em viagem</span>
+            <h2 class="card-title" id="current-place-name">Manaus • Preparando as malas</h2>
+            <p class="card-subtitle" id="current-status-bubble">"Pensando na Caroline!"</p>
+          </div>
+          <div class="mini-character-preview" id="status-character-preview" aria-hidden="true"></div>
+        </div>
+
+        <div class="map-frame">
+          <div id="trip-map" aria-label="Mapa da viagem do Venâncio"></div>
+          <div class="map-controls-overlay">
+            <button class="map-chip" id="btn-focus-venancio">🧸 Venancinho</button>
+            <button class="map-chip" id="btn-focus-route">🗺️ Rota toda</button>
+            <button class="map-chip" id="btn-focus-home">🏡 Manaus</button>
+          </div>
+        </div>
+
+        <div class="map-footer-info">
+          <span id="last-updated-text">Última atualização: agora</span>
+          <button class="text-link-btn" id="btn-refresh-now">↻ Atualizar</button>
+        </div>
+      </article>
+
+      <!-- 4. ROTINA DO DIA (24 A 30 DE NOVEMBRO) -->
+      <article class="card routine-card">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title">📅 Rotina do Venancinho</h2>
+            <p class="card-subtitle" id="routine-day-summary">Veja o que ele vai fazer em cada dia da viagem</p>
+          </div>
+        </div>
+
+        <div class="day-tabs" id="caroline-day-tabs" role="tablist"></div>
+
+        <div class="timeline-list" id="caroline-routine-list"></div>
+      </article>
+
+      <!-- 5. ENVIAR RECADINHO PARA O VENÂNCIO + MURAL -->
+      <article class="card notes-card" id="caroline-notes-section">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title">💌 Mandar recadinho pro Venâncio</h2>
+            <p class="card-subtitle">Ele vai ver sua mensagem logo no topo assim que abrir!</p>
+          </div>
+        </div>
+
+        <form id="form-caroline-note" class="note-form">
+          <div class="mood-picker" id="caroline-mood-picker">
+            <button type="button" class="mood-btn active" data-mood="💗 Saudade">💗 Saudade</button>
+            <button type="button" class="mood-btn" data-mood="🤖 Boa sorte na OBR!">🤖 Boa sorte</button>
+            <button type="button" class="mood-btn" data-mood="😘 Um beijinho">😘 Beijinho</button>
+            <button type="button" class="mood-btn" data-mood="🥰 Te amo muito">🥰 Te amo</button>
+          </div>
+          <textarea
+            id="input-caroline-note"
+            rows="3"
+            maxlength="400"
+            placeholder="Escreva um recadinho fofo para o seu Venancinho..."
+            required
+          ></textarea>
+          <button type="submit" class="btn btn-rose btn-full">
+            Enviar recadinho pro Venâncio 💌
+          </button>
+        </form>
+
+        <div class="notes-history-wrap">
+          <h3 class="subsection-title">📖 Nosso mural de bilhetinhos</h3>
+          <div class="notes-feed" id="caroline-notes-feed"></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ==================== VISÃO DO VENÂNCIO (PAINEL DE CONTROLE) ==================== -->
+    <section id="view-venancio" class="view-section hidden">
+      <!-- 1. ÚLTIMO RECADINHO DA CAROLINE (DESTAQUE ASSIM QUE ELE ABRE!) -->
+      <article class="card note-spotlight note-from-caroline">
+        <div class="note-spotlight-header">
+          <div class="note-author">
+            <div class="caroline-avatar">🌷</div>
+            <div>
+              <span class="note-kicker">Último recadinho da Caroline 💕</span>
+              <span class="note-time" id="featured-c-time">ainda sem recadinho novo</span>
+            </div>
+          </div>
+          <span class="badge-new hidden" id="featured-c-badge">Novo! 💌</span>
+        </div>
+
+        <p class="handwritten-note" id="featured-c-text">
+          Quando a Caroline mandar um recadinho pra você, ele vai aparecer bem aqui assim que você abrir! 💗
+        </p>
+
+        <div class="venancio-love-summary">
+          <span>🤗 Caroline apertou "Tô com saudade" <strong id="venancio-hug-counter">0</strong> vezes!</span>
+        </div>
+      </article>
+
+      <!-- 2. ESCREVER RECADINHO PARA A TELA INICIAL DA CAROLINE -->
+      <article class="card">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title">💌 Recadinho para a tela inicial da Caroline</h2>
+            <p class="card-subtitle">Assim que ela abrir o app, vai ver essa mensagem em destaque</p>
+          </div>
+        </div>
+
+        <form id="form-venancio-note" class="note-form">
+          <div class="mood-picker" id="venancio-mood-picker">
+            <button type="button" class="mood-btn active" data-mood="💗 Te amo">💗 Te amo</button>
+            <button type="button" class="mood-btn" data-mood="✈️ Cheguei bem!">✈️ Cheguei bem</button>
+            <button type="button" class="mood-btn" data-mood="🤖 Na OBR!">🤖 Na OBR</button>
+            <button type="button" class="mood-btn" data-mood="🌙 Boa noite amor">🌙 Boa noite</button>
+          </div>
+          <textarea
+            id="input-venancio-note"
+            rows="3"
+            maxlength="400"
+            placeholder="Oi meu amor! Acabei de chegar no hotel e já tô morrendo de saudade..."
+            required
+          ></textarea>
+          <button type="submit" class="btn btn-lavender btn-full">
+            Publicar na tela inicial da Caroline ✨
+          </button>
+        </form>
+      </article>
+
+      <!-- 3. ATUALIZAR ONDE ESTOU AGORA (BONEQUINHO NO MAPA) -->
+      <article class="card">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title">📍 Atualizar onde o bonequinho está</h2>
+            <p class="card-subtitle">Toque em um lugar rápido ou use o GPS do celular</p>
+          </div>
+        </div>
+
+        <div class="live-preview-box">
+          <div id="venancio-character-live-preview"></div>
+          <div class="live-preview-info">
+            <span class="pill-tag pill-mint" id="preview-place-badge">Local selecionado</span>
+            <p class="preview-bubble-text" id="preview-bubble-text">"Pensando na Caroline!"</p>
+          </div>
+        </div>
+
+        <label class="field-label">1. Escolha o local da viagem (ou GPS):</label>
+        <div class="preset-grid" id="location-presets-grid"></div>
+
+        <button type="button" class="btn btn-mint btn-full mt-sm" id="btn-use-gps">
+          🛰️ Usar minha localização real agora (GPS)
+        </button>
+
+        <div class="form-row mt-md">
+          <div class="form-group">
+            <label class="field-label" for="input-custom-place">Nome do lugar no mapa:</label>
+            <input type="text" id="input-custom-place" placeholder="Ex: Centro de Convenções de João Pessoa (OBR)" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="field-label" for="input-status-bubble">Balãozinho de fala do bonequinho:</label>
+            <input type="text" id="input-status-bubble" maxlength="90" placeholder="Ex: Preparando o robô e pensando em você! 🤖💗" />
+          </div>
+        </div>
+
+        <label class="field-label mt-sm">2. Escolha a pose do bonequinho:</label>
+        <div class="pose-grid" id="pose-picker-grid"></div>
+
+        <button type="button" class="btn btn-rose btn-full mt-md" id="btn-save-location">
+          Salvar posição do bonequinho no mapa 🗺️💗
+        </button>
+      </article>
+
+      <!-- 4. EDITAR A ROTINA DO DIA (24 A 30/11) -->
+      <article class="card">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title">📝 Atualizar o que vou fazer no dia</h2>
+            <p class="card-subtitle">Adicione, marque como feito ou edite sua rotina — a Caroline vê na hora!</p>
+          </div>
+        </div>
+
+        <div class="day-tabs" id="venancio-day-tabs" role="tablist"></div>
+
+        <div class="timeline-list editable" id="venancio-routine-list"></div>
+
+        <form id="form-add-routine" class="add-routine-form">
+          <h3 class="subsection-title">➕ Adicionar atividade neste dia</h3>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="field-label" for="routine-time">Horário</label>
+              <input type="time" id="routine-time" value="09:00" required />
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="routine-emoji">Ícone</label>
+              <select id="routine-emoji">
+                <option value="🤖">🤖 Robótica / OBR</option>
+                <option value="✈️">✈️ Voo / Aeroporto</option>
+                <option value="🚗">🚗 Estrada / Carro</option>
+                <option value="🏨">🏨 Hotel / Descanso</option>
+                <option value="🍽️">🍽️ Almoço / Jantar</option>
+                <option value="🌴">🌴 Passeio / Praia</option>
+                <option value="☕">☕ Café da manhã</option>
+                <option value="📞">📞 Ligar pra Caroline</option>
+                <option value="🏆">🏆 Premiação</option>
+                <option value="💗">💗 Saudade / Amor</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="field-label" for="routine-title">O que vou fazer?</label>
+            <input type="text" id="routine-title" maxlength="80" placeholder="Ex: Rodada da OBR na arena principal" required />
+          </div>
+          <div class="form-group">
+            <label class="field-label" for="routine-place">Onde? (opcional)</label>
+            <input type="text" id="routine-place" maxlength="80" placeholder="Ex: Centro de Convenções de João Pessoa" />
+          </div>
+          <button type="submit" class="btn btn-peach btn-full">
+            Adicionar na rotina do dia ✨
+          </button>
+        </form>
+      </article>
+
+      <!-- 5. MURAL DE RECADINHOS (VISÃO DO VENÂNCIO) -->
+      <article class="card">
+        <h2 class="card-title">📖 Todos os bilhetinhos trocados</h2>
+        <div class="notes-feed" id="venancio-notes-feed"></div>
+      </article>
+
+      <!-- 6. CONFIGURAÇÃO DE SINCRONIZAÇÃO NA NUVEM -->
+      <article class="card cloud-card">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title">☁️ Sincronização entre celulares</h2>
+            <p class="card-subtitle" id="cloud-mode-desc">Conecte seu Firebase gratuito para sincronizar em tempo real entre Manaus e João Pessoa.</p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="field-label" for="input-firebase-url">URL do Firebase Realtime Database:</label>
+          <input type="url" id="input-firebase-url" placeholder="https://seu-projeto-default-rtdb.firebaseio.com" />
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-sky" id="btn-save-cloud-url">Conectar nuvem ☁️</button>
+          <button type="button" class="btn btn-soft" id="btn-reset-demo">Restaurar roteiro padrão</button>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <!-- MODAL DE PIN PARA ENTRAR NO MODO VENÂNCIO -->
+  <div id="pin-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="pin-modal-title">
+    <div class="modal-card">
+      <div class="modal-face-badge">
+        <img src="assets/venancio-face.png" alt="Venâncio" />
+      </div>
+      <h2 id="pin-modal-title">Área do Venancinho 🧸</h2>
+      <p class="modal-subtitle">Digite o PIN pra atualizar sua rotina e mandar recadinhos pra Caroline.</p>
+      <form id="form-pin">
+        <input
+          type="password"
+          inputmode="numeric"
+          maxlength="6"
+          id="input-pin"
+          class="pin-input"
+          placeholder="••••"
+          autocomplete="off"
+          required
+        />
+        <p class="pin-hint">Dica: datas da viagem (2430)</p>
+        <p class="pin-error hidden" id="pin-error">PIN incorreto, tenta de novo!</p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-soft" id="btn-cancel-pin">Voltar</button>
+          <button type="submit" class="btn btn-rose">Entrar ✨</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST DE NOTIFICAÇÃO FOFA -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <footer class="app-footer">
+    <p>Feito com muito amor pelo Venâncio para a Caroline 💗 • OBR João Pessoa</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
